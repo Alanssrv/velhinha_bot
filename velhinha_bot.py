@@ -1,5 +1,6 @@
 import telebot
 import re
+import time
 import jogo_velha
 
 theBoard = [' '] * 10
@@ -38,9 +39,32 @@ def command_hide(message):
 
 @bot.message_handler(commands=['jogar'])
 def change_player(message):
+    clearParams()
     start_markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
     start_markup.row('/eu', '/vc')
-    bot.send_message(message.chat.id, "Escolha quem começa jogando\n/eu (a Velhinha) ⭕\n/vc ❌")
+    bot.send_message(message.chat.id, "Escolha quem começa jogando\n/eu ❌\n/vc (a Velhinha) ⭕", reply_markup=start_markup)
+
+def clearParams():
+    global theBoard
+    global isPlayer
+    global gameIsPlaying
+    theBoard = [' '] * 10
+    isPlayer = False
+    gameIsPlaying = False
+
+def desenha(message):
+    global theBoard
+    space = "   "
+    position = ['◻'] * 10
+    for index in range(10):
+        if theBoard[index] == 'X':
+            position[index] = '❌'
+        if theBoard[index] == 'O':
+            position[index] = '⭕'
+    msg = position[7] + space + position[8] + space + position[9] + '\n\n'
+    msg += position[4] + space + position[5] + space + position[6] + '\n\n'
+    msg += position[1] + space + position[2] + space + position[3]
+    bot.send_message(message.chat.id, msg)
 
 
 @bot.message_handler(func=lambda m: re.search(r'^[1-9]$', m.text))
@@ -50,47 +74,50 @@ def playerMove(message):
     global isPlayer
     global gameIsPlaying
 
+    time.sleep(2)
+    move = int(message.text)
+    if theBoard[move] != ' ':
+        bot.send_message(message.chat.id, "Posição já ocupada\nEscolha uma nova posição")
+        return
+
     if gameIsPlaying:
         if isPlayer:
-            move = message.text
-            print(move)
-            jogo_velha.makeMove(theBoard, playerLetter, int(move))
-            jogo_velha.drawBoard(theBoard)
+            jogo_velha.makeMove(theBoard, playerLetter, move)
+            desenha(message)
             if jogo_velha.isWinner(theBoard, playerLetter):
-                jogo_velha.drawBoard(theBoard)
-                print('Hooray! You have won the game!')
+                bot.send_message(message.chat.id, "Parabéns 🎉🎉!\nVocê ganhou da Velhinha, vamos /jogar novamente")
                 gameIsPlaying = False
             else:
                 if jogo_velha.isBoardFull(theBoard):
-                    jogo_velha.drawBoard(theBoard)
-                    print('The game is a tie!')
+                    bot.send_message(message.chat.id, "Ninguém ganhou essa!\nVamos /jogar denovo")
                     gameIsPlaying = False
                 else:
                     isPlayer = False
-            velhinhaJoga()
+            if gameIsPlaying:
+                velhinhaJoga(message)
 
 
-def velhinhaJoga():
+def velhinhaJoga(message):
     global theBoard
     global playerLetter, computerLetter
     global isPlayer
     global gameIsPlaying
+
+    bot.send_message(message.chat.id, "Minha vez")
+    time.sleep(2)
     move = jogo_velha.getComputerMove(theBoard, computerLetter)
-    print(move)
     jogo_velha.makeMove(theBoard, computerLetter, move)
-    jogo_velha.drawBoard(theBoard)
+    desenha(message)
     if jogo_velha.isWinner(theBoard, computerLetter):
-        jogo_velha.drawBoard(theBoard)
-        print('The computer has beaten you! You lose.')
+        bot.send_message(message.chat.id, "Eu ganhei 👵🏽\nTente novamente, vamos /jogar")
         gameIsPlaying = False
     else:
         if jogo_velha.isBoardFull(theBoard):
-            jogo_velha.drawBoard(theBoard)
-            print('The game is a tie!')
+            bot.send_message(message.chat.id, "Ninguém ganhou essa!\nVamos /jogar novamente")
             gameIsPlaying = False
         else:
             isPlayer = True
-    print(isPlayer)
+            bot.send_message(message.chat.id, "Sua vez, pode escolher uma posição")
 
 
 @bot.message_handler(commands=['eu', 'vc'])
@@ -102,17 +129,24 @@ def init_game(message):
 
     playerLetter, computerLetter = ['X', 'O']
 
-    print(message.text)
     if message.text == '/eu':
-        isPlayer = False
-    else:
         isPlayer = True
+    else:
+        isPlayer = False
 
-    bot.send_message(message.chat.id, 'Vamos começar!!!')
+    start_markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
+    start_markup.row('7', '8', '9')
+    start_markup.row('4', '5', '6')
+    start_markup.row('1', '2', '3')
+    bot.send_message(message.chat.id, 'Vamos começar!!!', reply_markup=start_markup)
+
+    desenha(message)
 
     gameIsPlaying = True
     if not isPlayer:
-        velhinhaJoga()
+        velhinhaJoga(message)
+    else:
+        bot.send_message(message.chat.id, 'Pode iniciar')
 
 
 bot.infinity_polling()

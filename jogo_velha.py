@@ -1,21 +1,6 @@
 # Tic Tac Toe
 import random
 
-def drawBoard(board):
-    # This function prints out the board that it was passed.
-    # "board" is a list of 10 strings representing the board (ignore index 0)
-    print('   |   |')
-    print(' ' + board[7] + ' | ' + board[8] + ' | ' + board[9])
-    print('   |   |')
-    print('-----------')
-    print('   |   |')
-    print(' ' + board[4] + ' | ' + board[5] + ' | ' + board[6])
-    print('   |   |')
-    print('-----------')
-    print('   |   |')
-    print(' ' + board[1] + ' | ' + board[2] + ' | ' + board[3])
-    print('   |   |')
-
 def makeMove(board, letter, move):
     board[move] = letter
 
@@ -98,45 +83,3 @@ def isBoardFull(board):
         if isSpaceFree(board, i):
             return False
     return True
-
-def initGame(playerGoesFirst):
-    print('Welcome to Tic Tac Toe!')
-    while True:
-        # Reset the board
-        theBoard = [' '] * 10
-        playerLetter, computerLetter = ['X', 'O']
-        isPlayer = playerGoesFirst
-
-        gameIsPlaying = True
-        while gameIsPlaying:
-            if isPlayer:
-                # Player’s isPlayer.
-                drawBoard(theBoard)
-                move = getPlayerMove(theBoard)
-                makeMove(theBoard, playerLetter, move)
-                if isWinner(theBoard, playerLetter):
-                    drawBoard(theBoard)
-                    print('Hooray! You have won the game!')
-                    gameIsPlaying = False
-                else:
-                    if isBoardFull(theBoard):
-                        drawBoard(theBoard)
-                        print('The game is a tie!')
-                        break
-                    else:
-                        isPlayer = False
-            else:
-                # Computer’s isPlayer.
-                move = getComputerMove(theBoard, computerLetter)
-                makeMove(theBoard, computerLetter, move)
-                if isWinner(theBoard, computerLetter):
-                    drawBoard(theBoard)
-                    print('The computer has beaten you! You lose.')
-                    gameIsPlaying = False
-                else:
-                    if isBoardFull(theBoard):
-                        drawBoard(theBoard)
-                        print('The game is a tie!')
-                        break
-                    else:
-                        isPlayer = True
