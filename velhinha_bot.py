@@ -1,4 +1,11 @@
 import telebot
+import re
+import jogo_velha
+
+theBoard = [' '] * 10
+playerLetter, computerLetter = ['X', 'O']
+isPlayer = False
+gameIsPlaying = False
 
 bot = telebot.TeleBot("TOKEN", parse_mode = None)
 
@@ -35,8 +42,77 @@ def change_player(message):
     start_markup.row('/eu', '/vc')
     bot.send_message(message.chat.id, "Escolha quem começa jogando\n/eu (a Velhinha) ⭕\n/vc ❌")
 
-@bot.message_handler(commands=['eu', 'jogar'])
+
+@bot.message_handler(func=lambda m: re.search(r'^[1-9]$', m.text))
+def playerMove(message):
+    global theBoard
+    global playerLetter, computerLetter
+    global isPlayer
+    global gameIsPlaying
+
+    if gameIsPlaying:
+        if isPlayer:
+            move = message.text
+            print(move)
+            jogo_velha.makeMove(theBoard, playerLetter, int(move))
+            jogo_velha.drawBoard(theBoard)
+            if jogo_velha.isWinner(theBoard, playerLetter):
+                jogo_velha.drawBoard(theBoard)
+                print('Hooray! You have won the game!')
+                gameIsPlaying = False
+            else:
+                if jogo_velha.isBoardFull(theBoard):
+                    jogo_velha.drawBoard(theBoard)
+                    print('The game is a tie!')
+                    gameIsPlaying = False
+                else:
+                    isPlayer = False
+            velhinhaJoga()
+
+
+def velhinhaJoga():
+    global theBoard
+    global playerLetter, computerLetter
+    global isPlayer
+    global gameIsPlaying
+    move = jogo_velha.getComputerMove(theBoard, computerLetter)
+    print(move)
+    jogo_velha.makeMove(theBoard, computerLetter, move)
+    jogo_velha.drawBoard(theBoard)
+    if jogo_velha.isWinner(theBoard, computerLetter):
+        jogo_velha.drawBoard(theBoard)
+        print('The computer has beaten you! You lose.')
+        gameIsPlaying = False
+    else:
+        if jogo_velha.isBoardFull(theBoard):
+            jogo_velha.drawBoard(theBoard)
+            print('The game is a tie!')
+            gameIsPlaying = False
+        else:
+            isPlayer = True
+    print(isPlayer)
+
+
+@bot.message_handler(commands=['eu', 'vc'])
 def init_game(message):
+    global theBoard
+    global playerLetter, computerLetter
+    global isPlayer
+    global gameIsPlaying
+
+    playerLetter, computerLetter = ['X', 'O']
+
+    print(message.text)
+    if message.text == '/eu':
+        isPlayer = False
+    else:
+        isPlayer = True
+
     bot.send_message(message.chat.id, 'Vamos começar!!!')
-    
+
+    gameIsPlaying = True
+    if not isPlayer:
+        velhinhaJoga()
+
+
 bot.infinity_polling()
