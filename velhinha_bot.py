@@ -12,39 +12,44 @@ bot = telebot.TeleBot("TOKEN", parse_mode = None)
 
 @bot.message_handler(commands=['start', 'menu'])
 def command_start(message):
+    clear_params()
     start_markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-    start_markup.row('/menu', '/ajuda')
+    start_markup.row('/jogo_da_velha', '/como_jogar')
     start_markup.row('/sobre', '/jogar')
-    bot.send_message(message.chat.id, "👵🏽 Olá, eu sou a Velhinha!\nQuer /ajuda de como jogar o jogo da velha?\nClique em /sobre para saber sobre mim")
+    bot.send_message(message.chat.id, "👵🏽 Olá, eu sou a Velhinha, sou um bot que te desafia no jogo da velha!\nClique em /sobre para mais de mim", reply_markup=start_markup)
+    bot.send_message(message.chat.id, "O que é o /jogo_da_velha?\nQuer saber /como_jogar com a velhinha?")
     bot.send_message(message.chat.id, "Para iniciar uma partida contra a Velhinha, clique em /jogar")
-    bot.send_message(message.from_user.id, "Utilize o atalho rápido!\n⌨ Você pode /utilizar_teclado se preferir", reply_markup=start_markup)
     
 
-@bot.message_handler(commands=['ajuda'])
+@bot.message_handler(commands=['jogo_da_velha'])
 def help(message):
+    clear_params()
     bot.send_message(message.chat.id, "O jogo da velha ou jogo do galo ou três em linha é um jogo e/ou passatempo popular.\nÉ um jogo de regras extremamente simples, que não traz grandes dificuldades para seus jogadores e é facilmente aprendido.")
-    bot.send_message(message.chat.id, "No modo básico do jogo, participam duas pessoas, que jogam alternadamente, preenchendo cada um dos\nespaços vazios. Cada participante poderá usar um símbolo (❌ ou ⭕). Vence o jogador que conseguir\nformar primeiro uma linha com três símbolos iguais, seja ela na horizontal, vertical ou diagonal.")
+    bot.send_message(message.chat.id, "No modo básico do jogo, participam duas pessoas, que jogam alternadamente, preenchendo cada um dos\nespaços vazios. Cada participante poderá usar um símbolo (❌ ou ⭕). Vence o jogador que conseguir formar primeiro uma linha com três símbolos iguais, seja ela na horizontal, vertical ou diagonal.")
     
 
 @bot.message_handler(commands=['sobre'])
 def about(message):
+    clear_params()
     bot.send_message(message.chat.id, "Eu sou a Velhinha, uma IA desenvolvida para te desafiar no Jogo da Velha, minha especialidade.\nFui desenvolvida com @BotFather e Python 🐍, por @alanssrv",)
 
 
-@bot.message_handler(commands=['utilizar_teclado'])
-def command_hide(message):
-    hide_markup = telebot.types.ReplyKeyboardRemove()
-    bot.send_message(message.chat.id, "⌨...", reply_markup=hide_markup)
+@bot.message_handler(commands=['como_jogar'])
+def how_play(message):
+    clear_params()
+    bot.send_message(message.chat.id, "Você sempre jogar com o ❌ e a velhina com a ⭕, antes de iniciar a partida você pode escolher quem a inicia jogando")
+    bot.send_message(message.chat.id, "Para jogar, selecione um número de 1 a 9 que corresponde a cada posição da malha, ordenadas de baixo para cima, iniciando da direita inferior")
+    bot.send_message(message.chat.id, "Para facilitar o teclado rápido do Telegram está com as posições das casas já organizadas com cada número")
 
 
 @bot.message_handler(commands=['jogar'])
 def change_player(message):
-    clearParams()
+    clear_params()
     start_markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
     start_markup.row('/eu', '/vc')
     bot.send_message(message.chat.id, "Escolha quem começa jogando\n/eu ❌\n/vc (a Velhinha) ⭕", reply_markup=start_markup)
 
-def clearParams():
+def clear_params():
     global theBoard
     global isPlayer
     global gameIsPlaying
@@ -68,7 +73,7 @@ def desenha(message):
 
 
 @bot.message_handler(func=lambda m: re.search(r'^[1-9]$', m.text))
-def playerMove(message):
+def player_move(message):
     global theBoard
     global playerLetter, computerLetter
     global isPlayer
@@ -85,7 +90,7 @@ def playerMove(message):
             jogo_velha.makeMove(theBoard, playerLetter, move)
             desenha(message)
             if jogo_velha.isWinner(theBoard, playerLetter):
-                bot.send_message(message.chat.id, "Parabéns 🎉🎉!\nVocê ganhou da Velhinha, vamos /jogar novamente")
+                bot.send_message(message.chat.id, "Parabéns 🎉🎉!\nVocê ganhou da Velhinha, vamos /jogar novamente ou você pode voltar ao /menu")
                 gameIsPlaying = False
             else:
                 if jogo_velha.isBoardFull(theBoard):
@@ -94,10 +99,12 @@ def playerMove(message):
                 else:
                     isPlayer = False
             if gameIsPlaying:
-                velhinhaJoga(message)
+                computer_move(message)
+    else:
+        bot.send_message(message.chat.id, "Inicie uma nova partida, em /jogar\nOu volte ao /menu")
 
 
-def velhinhaJoga(message):
+def computer_move(message):
     global theBoard
     global playerLetter, computerLetter
     global isPlayer
@@ -109,7 +116,7 @@ def velhinhaJoga(message):
     jogo_velha.makeMove(theBoard, computerLetter, move)
     desenha(message)
     if jogo_velha.isWinner(theBoard, computerLetter):
-        bot.send_message(message.chat.id, "Eu ganhei 👵🏽\nTente novamente, vamos /jogar")
+        bot.send_message(message.chat.id, "Eu ganhei 👵🏽\nTente novamente, vamos /jogar ou volte ao /menu")
         gameIsPlaying = False
     else:
         if jogo_velha.isBoardFull(theBoard):
@@ -144,7 +151,7 @@ def init_game(message):
 
     gameIsPlaying = True
     if not isPlayer:
-        velhinhaJoga(message)
+        computer_move(message)
     else:
         bot.send_message(message.chat.id, 'Pode iniciar')
 
